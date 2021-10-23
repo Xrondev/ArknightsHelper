@@ -7,9 +7,9 @@ from airtest.core.api import *
 auto_setup(__file__)
 
 TIMEOUT = 300  # 普通找图5分钟超时
-TIMEOUT_OFFSET = 600  # 关卡结算超时时间= TIMEOUT + TIMEOUTOFFSET 默认300+600秒（15分钟）
+TIMEOUT_OFFSET = 1000  # 关卡结算超时时间= TIMEOUT + TIMEOUTOFFSET 默认300+1000
 AUTO_SANITY = 300  # 自动用药回复体力上限, 小于60即不自动用药恢复
-TIMES = 4  # 重复关卡次数，可以设置得很大，就可以用上面体力规定的值去限制耍关卡的次数
+TIMES = 3  # 重复关卡次数，可以设置得很大，就可以用上面体力规定的值去限制耍关卡的次数
 
 # 重复刷关：先选中关卡后运行
 def repeater(times: int, auto_sanity: int):
@@ -55,6 +55,10 @@ def repeater(times: int, auto_sanity: int):
                 else:
                     touch(Template(r"tpl1635011037397.png", record_pos=(0.351, 0.169), resolution=(1920, 1080)),
                           duration=duration)
+                    sleep(2)
+                    start = wait(Template(r"tpl1635010723221.png", record_pos=(0.391, 0.229), resolution=(1920, 1080)),
+                     timeout=TIMEOUT, interval=1)
+                    touch(start, duration=duration)
         except TargetNotFoundError:
             log("AUTO SANITY: 理智尚足")
 
@@ -64,15 +68,20 @@ def repeater(times: int, auto_sanity: int):
         touch(start_op, duration=duration + random())
         sleep(10)
 
-        op_finished = wait(Template(r"tpl1635010927096.png", record_pos=(0.234, 0.096), resolution=(1920, 1080)),
-                           timeout=TIMEOUT + TIMEOUT_OFFSET, interval=5)
+        def interval_func():
+            touch((1700 + random() * 50, 200 + random() * 50))
+
+        op_finished = wait(Template(r"tpl1635013503155.png", record_pos=(-0.328, 0.209), resolution=(1920, 1080)),
+                           timeout=TIMEOUT + TIMEOUT_OFFSET,
+                           intervalfunc=interval_func,
+                           interval=5)
         sleep(2)
         touch((380 + random() * 50, 955 + random() * 50), duration=duration + random())
 
         start = exists(Template(r"tpl1635010723221.png", record_pos=(0.391, 0.229), resolution=(1920, 1080)))
 
         while start is False:
-            op_finished = exists(Template(r"tpl1635010927096.png", record_pos=(0.234, 0.096), resolution=(1920, 1080)))
+            op_finished = exists(Template(r"tpl1635013503155.png", record_pos=(-0.328, 0.209), resolution=(1920, 1080)))
             if op_finished is not False:
                 touch((380 + random() * 50, 955 + random() * 50), duration=duration + random())
             sleep(1)
@@ -81,7 +90,9 @@ def repeater(times: int, auto_sanity: int):
     except TargetNotFoundError:
         print("Start timeout")
     times = times - 1
+    log("还剩" + str(times) + "次")
     repeater(times, auto_sanity)
+    
 
 
 repeater(TIMES, AUTO_SANITY)
